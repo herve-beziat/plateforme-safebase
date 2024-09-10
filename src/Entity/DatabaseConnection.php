@@ -2,12 +2,29 @@
 
 namespace App\Entity;
 
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\Post;
+use ApiPlatform\Metadata\Put;
+use ApiPlatform\Metadata\Delete;
 use App\Repository\DatabaseConnectionRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\component\Serializer\Annotation\Ignore;
 
 #[ORM\Entity(repositoryClass: DatabaseConnectionRepository::class)]
+#[ORM\HasLifecycleCallbacks]
+#[ApiResource(
+    operations: [
+        new Get(),
+        new GetCollection(),
+        new Post(),
+        new Put(),
+        new Delete()
+    ]
+)]
 class DatabaseConnection
 {
     #[ORM\Id]
@@ -34,9 +51,11 @@ class DatabaseConnection
     private ?string $databaseName = null;
 
     #[ORM\Column]
+    #[Ignore]
     private ?\DateTimeImmutable $createdAt = null;
 
     #[ORM\Column]
+    #[Ignore]
     private ?\DateTimeImmutable $updatedAt = null;
 
     /**
@@ -55,6 +74,8 @@ class DatabaseConnection
     {
         $this->backups = new ArrayCollection();
         $this->backupSchedules = new ArrayCollection();
+        $this->createdAt = new \DateTimeImmutable();
+        $this->updatedAt = new \DateTimeImmutable();
     }
 
     public function getId(): ?int
@@ -217,4 +238,15 @@ class DatabaseConnection
 
         return $this;
     }
+
+    #[ORM\PrePersist]
+    #[ORM\PreUpdate]
+    public function updateTimestamps(): void
+    {
+        $this->updatedAt = new \DateTimeImmutable();
+        if ($this->createdAt === null) {
+            $this->createdAt = new \DateTimeImmutable();
+        }
+    }
+
 }
