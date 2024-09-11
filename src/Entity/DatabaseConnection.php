@@ -9,10 +9,12 @@ use ApiPlatform\Metadata\Post;
 use ApiPlatform\Metadata\Put;
 use ApiPlatform\Metadata\Delete;
 use App\Repository\DatabaseConnectionRepository;
+use App\Controller\CreateBackupAction;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\component\Serializer\Annotation\Ignore;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: DatabaseConnectionRepository::class)]
 #[ORM\HasLifecycleCallbacks]
@@ -22,7 +24,12 @@ use Symfony\component\Serializer\Annotation\Ignore;
         new GetCollection(),
         new Post(),
         new Put(),
-        new Delete()
+        new Delete(),
+        new Post(
+            uriTemplate: '/database_connections/{id}/backup',
+            controller: CreateBackupAction::class,
+            name: 'create_backup'
+        )
     ]
 )]
 class DatabaseConnection
@@ -33,21 +40,31 @@ class DatabaseConnection
     private ?int $id = null;
 
     #[ORM\Column(length: 255)]
+    #[Assert\NotBlank(message: "Le nom ne peut pas être vide")]
     private ?string $name = null;
 
     #[ORM\Column(length: 255)]
+    #[Assert\NotBlank(message: "L'hôte ne peut pas être vide")]
+    #[Assert\Regex(
+        pattern: "/^(([a-zA-Z0-9-_]+\.)*[a-zA-Z0-9-_]+|localhost|((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?))$/",
+        message: "Ce champ doit être un nom d'hôte valide, une adresse IP ou 'localhost'."
+    )]
     private ?string $host = null;
 
     #[ORM\Column]
+    #[Assert\NotBlank(message: "Le port ne peut pas être vide")]
+    #[Assert\Range(min: 1, max: 65535, notInRangeMessage: "Le port doit être compris entre 1 et 65535")]
     private ?int $port = null;
 
     #[ORM\Column(length: 255)]
+    #[Assert\NotBlank(message: "Le nom d'utilisateur ne peut pas être vide")]
     private ?string $username = null;
 
     #[ORM\Column(length: 255, nullable: true)]
     private ?string $password = null;
 
     #[ORM\Column(length: 255)]
+    #[Assert\NotBlank(message: "Le nom de la base de données ne peut pas être vide")]
     private ?string $databaseName = null;
 
     #[ORM\Column]
