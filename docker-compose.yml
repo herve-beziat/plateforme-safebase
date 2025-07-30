@@ -1,0 +1,41 @@
+version: "3.8"
+
+services:
+  app:
+    build:
+      context: .
+    container_name: safebase_app
+    ports:
+      - "8080:80"  # pas de conflit avec Apache (WAMP reste sur 80)
+    volumes:
+      - .:/var/www/html
+    depends_on:
+      - db
+
+  db:
+    image: mysql:8.0
+    container_name: safebase_db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: plateforme_safebase
+      MYSQL_USER: symfony
+      MYSQL_PASSWORD: symfony
+    ports:
+      - "3308:3306"  # on choisit un autre port libre (ni 3306, ni 3307)
+    volumes:
+      - db_data:/var/lib/mysql
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: safebase_pma
+    restart: always
+    ports:
+      - "8081:80"
+    environment:
+      PMA_HOST: db
+      PMA_USER: symfony
+      PMA_PASSWORD: symfony
+
+volumes:
+  db_data:

@@ -1,0 +1,161 @@
+{% extends 'base.html.twig' %}
+
+
+{% block title %}Connexion à une base de données{% endblock %}
+
+{% block stylesheets %}
+    <style>
+        .form-container {
+            max-width: 600px;
+            margin: 40px auto;
+            padding: 2rem;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .form-container h2 {
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .form-group {
+            margin-bottom: 1rem;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 0.5rem;
+            font-size: 1rem;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        button {
+            padding: 0.6rem 1.2rem;
+            font-size: 1rem;
+            background-color: #0e76a8;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 1rem;
+        }
+
+        button:hover {
+            background-color: #095e8d;
+        }
+
+        #response-message {
+            margin-top: 1.5rem;
+            padding: 1rem;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+
+        #response-message.success {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        #response-message.error {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+    </style>
+{% endblock %}
+
+{% block body %}
+    <div class="form-container">
+        <h2>Connexion à la base de données</h2>
+
+        <form id="connection-form">
+            <div class="form-group">
+                <label for="name">Nom de la connexion</label>
+                <input type="text" id="name" required>
+            </div>
+            <div class="form-group">
+                <label for="host">Hôte</label>
+                <input type="text" id="host" value="host.docker.internal" required>
+            </div>
+            <div class="form-group">
+                <label for="port">Port</label>
+                <input type="number" id="port" value="3306" required>
+            </div>
+            <div class="form-group">
+                <label for="username">Nom d'utilisateur</label>
+                <input type="text" id="username" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Mot de passe</label>
+                <input type="password" id="password">
+            </div>
+            <div class="form-group">
+                <label for="databaseName">Nom de la base de données</label>
+                <input type="text" id="databaseName" required>
+            </div>
+
+            <button type="submit">Tester la connexion</button>
+        </form>
+
+        <div id="response-message" style="display: none;"></div>
+    </div>
+{% endblock %}
+
+{% block javascripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const form = document.getElementById('connection-form');
+        const responseBox = document.getElementById('response-message');
+
+        if (!form) {
+            console.error('Formulaire introuvable');
+            return;
+        }
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const data = {
+                name: document.getElementById('name').value,
+                host: 'host.docker.internal',
+                port: parseInt(document.getElementById('port').value),
+                username: document.getElementById('username').value,
+                password: document.getElementById('password').value,
+                databaseName: document.getElementById('databaseName').value
+            };
+
+            try {
+                const res = await fetch('/api/test-connection', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await res.json();
+                responseBox.style.display = 'block';
+
+                if (res.ok && result.status) {
+                    responseBox.className = 'success';
+                    responseBox.textContent = result.message;
+                } else {
+                    responseBox.className = 'error';
+                    responseBox.textContent = result.message || 'Erreur inconnue';
+                }
+            } catch (err) {
+                responseBox.style.display = 'block';
+                responseBox.className = 'error';
+                responseBox.textContent = 'Erreur lors de la requête.';
+            }
+        });
+    });
+</script>
+{% endblock %}
+
+
